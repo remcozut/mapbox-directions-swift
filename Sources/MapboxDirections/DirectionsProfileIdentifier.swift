@@ -42,4 +42,10 @@ public struct DirectionsProfileIdentifier: Codable, Hashable, RawRepresentable {
     This profile prioritizes short routes, making use of sidewalks and trails where available. A walking route may use other modes of transportation, such as ferries or trains, where necessary.
     */
     public static let walking: DirectionsProfileIdentifier = .init(rawValue: "mapbox/walking")
+	
+	
+	public static let cyclingRecreational: DirectionsProfileIdentifier = .init(rawValue: "mapbox/cycling-recreational")
+	
+	public static let cyclingRacing: DirectionsProfileIdentifier = .init(rawValue: "mapbox/cycling-race")
+	public static let cyclingMountain: DirectionsProfileIdentifier = .init(rawValue: "mapbox/cycling-mountain")
 }

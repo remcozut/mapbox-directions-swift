@@ -112,16 +112,17 @@ open class Directions: NSObject {
      - parameter accessToken: A Mapbox [access token](https://docs.mapbox.com/help/glossary/access-token/). If an access token is not specified when initializing the directions object, it should be specified in the `MGLMapboxAccessToken` key in the main application bundle’s Info.plist.
      - parameter host: An optional hostname to the server API. The [Mapbox Directions API](https://docs.mapbox.com/api/navigation/#directions) endpoint is used by default.
      */
-    public init(accessToken: String?, host: String?) {
+	public init(accessToken: String?, host: String?, path: String?) {
         let accessToken = accessToken ?? defaultAccessToken
         precondition(accessToken != nil && !accessToken!.isEmpty, "A Mapbox access token is required. Go to <https://account.mapbox.com/access-tokens/>. In Info.plist, set the MGLMapboxAccessToken key to your access token, or use the Directions(accessToken:host:) initializer.")
         
         self.accessToken = accessToken!
         
-        if let host = host, !host.isEmpty {
+        if let host = host, !host.isEmpty, let path = path {
             var baseURLComponents = URLComponents()
             baseURLComponents.scheme = "https"
             baseURLComponents.host = host
+			baseURLComponents.path = path
             apiEndpoint = baseURLComponents.url!
         } else {
             apiEndpoint = URL(string:(defaultApiEndPointURLString ?? "https://api.mapbox.com"))!
@@ -136,7 +137,7 @@ open class Directions: NSObject {
      - parameter accessToken: A Mapbox [access token](https://docs.mapbox.com/help/glossary/access-token/). If an access token is not specified when initializing the directions object, it should be specified in the `MGLMapboxAccessToken` key in the main application bundle’s Info.plist.
      */
     public convenience init(accessToken: String?) {
-        self.init(accessToken: accessToken, host: nil)
+		self.init(accessToken: accessToken, host: nil, path: nil)
     }
     
     // MARK: Getting Directions
