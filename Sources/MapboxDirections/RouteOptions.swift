@@ -84,7 +84,7 @@ open class RouteOptions: DirectionsOptions {
     }
     
     internal override var abridgedPath: String {
-        return "directions/v5/\(profileIdentifier.rawValue)"
+        return "directions/v5/mapbox/\(profileIdentifier.rawValue)"
     }
     
     // MARK: Influencing the Path of the Route

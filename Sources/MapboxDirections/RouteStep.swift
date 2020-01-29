@@ -201,6 +201,8 @@ public enum ManeuverType: String, Codable {
  A `ManeuverDirection` clarifies a `ManeuverType` with directional information. The exact meaning of the maneuver direction for a given step depends on the step’s maneuver type; see the `ManeuverType` documentation for details.
  */
 public enum ManeuverDirection: String, Codable {
+	
+	case uturnRight = "uturn right"
     /**
      The maneuver requires a sharp turn to the right.
      */
@@ -235,13 +237,17 @@ public enum ManeuverDirection: String, Codable {
      The maneuver requires a sharp turn to the left.
      */
     case sharpLeft = "sharp left"
-
+	
+	case uTurnLeft = "uturn left"
     /**
      The maneuver requires a U-turn when possible.
 
      Use the difference between the step’s initial and final headings to distinguish between a U-turn to the left (typical in countries that drive on the right) and a U-turn on the right (typical in countries that drive on the left). If the difference in headings is greater than 180 degrees, the maneuver requires a U-turn to the left. If the difference in headings is less than 180 degrees, the maneuver requires a U-turn to the right.
      */
     case uTurn = "uturn"
+	
+	
+
 }
 
 /**
