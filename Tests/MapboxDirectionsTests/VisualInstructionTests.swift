@@ -24,6 +24,18 @@ class VisualInstructionsTests: XCTestCase {
                 "modifier": "right",
             ],
             "secondary": nil,
+            "view": [
+              "text": "CA01610_1_E",
+              "components": [
+                [
+                  "text": "CA01610_1_E",
+                  "type": "guidance-view",
+                  "imageURL": "https://www.mapbox.com/navigation"
+                    ],
+              ],
+              "type": "fork",
+              "modifier": "right"
+            ],
         ]
         let bannerData = try! JSONSerialization.data(withJSONObject: bannerJSON, options: [])
         var banner: VisualInstructionBanner?
@@ -36,12 +48,23 @@ class VisualInstructionsTests: XCTestCase {
             XCTAssertEqual(banner.primaryInstruction.maneuverType, .turn)
             XCTAssertEqual(banner.primaryInstruction.maneuverDirection, .right)
             XCTAssertNil(banner.secondaryInstruction)
+            XCTAssertNotNil(banner.quaternaryInstruction)
+            XCTAssertEqual(banner.quaternaryInstruction?.components.count, 1)
             XCTAssertEqual(banner.drivingSide, .default)
         }
         
+        let componentGuidanceViewImage = banner?.quaternaryInstruction?.components.first
+        XCTAssertNotNil(componentGuidanceViewImage)
+        
+        
         let component = VisualInstruction.Component.text(text: .init(text: "Weinstock Strasse", abbreviation: nil, abbreviationPriority: nil))
         let primaryInstruction = VisualInstruction(text: "Weinstock Strasse", maneuverType: .turn, maneuverDirection: .right, components: [component])
-        banner = VisualInstructionBanner(distanceAlongStep: 393.3, primary: primaryInstruction, secondary: nil, tertiary: nil, drivingSide: .right)
+        
+        let guideViewComponent = VisualInstruction.Component.guidanceView(image: GuidanceViewImageRepresentation(imageURL: URL(string: "https://www.mapbox.com/navigation")), alternativeText: VisualInstruction.Component.TextRepresentation(text: "CA01610_1_E", abbreviation: nil, abbreviationPriority: nil))
+        XCTAssert(componentGuidanceViewImage == guideViewComponent)
+        let quaternaryInstruction = VisualInstruction(text: "CA01610_1_E", maneuverType: .reachFork, maneuverDirection: .right, components: [guideViewComponent])
+        
+        banner = VisualInstructionBanner(distanceAlongStep: 393.3, primary: primaryInstruction, secondary: nil, tertiary: nil, quaternary: quaternaryInstruction, drivingSide: .right)
         let encoder = JSONEncoder()
         var encodedData: Data?
         XCTAssertNoThrow(encodedData = try encoder.encode(banner))
@@ -95,15 +118,17 @@ class VisualInstructionsTests: XCTestCase {
         options.includesSpokenInstructions = true
         options.distanceMeasurementSystem = .imperial
         options.includesVisualInstructions = true
-        var route: Route?
-        let task = Directions(accessToken: BogusToken).calculate(options) { (waypoints, routes, error) in
-            XCTAssertNil(error, "Error: \(error!.localizedDescription)")
+        var response: RouteResponse!
+        let task = Directions(credentials: BogusCredentials).calculate(options) { (session, result) in
             
-            XCTAssertNotNil(routes)
-            XCTAssertEqual(routes!.count, 1)
-            route = routes!.first!
+            switch result {
+            case let .failure(error):
+                XCTFail("Error! \(error)")
+            case let .success(resp):
+                response = resp
+                expectation.fulfill()
+            }
             
-            expectation.fulfill()
         }
         XCTAssertNotNil(task)
         
@@ -112,10 +137,15 @@ class VisualInstructionsTests: XCTestCase {
             XCTAssertEqual(task.state, .completed)
         }
         
-        XCTAssertNotNil(route)
-        XCTAssertEqual(route!.routeIdentifier, "cjgy4xps418g17mo7l2pdm734")
+        guard let route = response.routes?.first else {
+            XCTFail("No routes in response")
+            return
+        }
         
-        let leg = route!.legs.first!
+        XCTAssertNotNil(route)
+        XCTAssertEqual(route.routeIdentifier, "cjgy4xps418g17mo7l2pdm734")
+        
+        let leg = route.legs.first!
         let step = leg.steps[1]
         
         XCTAssertEqual(step.instructionsSpokenAlongStep!.count, 3)
@@ -185,15 +215,15 @@ class VisualInstructionsTests: XCTestCase {
         options.includesAlternativeRoutes = false
         options.includesVisualInstructions = true
         
-        var route: Route?
-        let task = Directions(accessToken: BogusToken).calculate(options) { (waypoints, routes, error) in
-            XCTAssertNil(error, "Error: \(error!.localizedDescription)")
-            
-            XCTAssertNotNil(routes)
-            XCTAssertEqual(routes!.count, 1)
-            route = routes!.first!
-            
-            expectation.fulfill()
+        var response: RouteResponse!
+        let task = Directions(credentials: BogusCredentials).calculate(options) { (session, result) in
+             switch result {
+            case let .failure(error):
+                XCTFail("Error! \(error)")
+            case let .success(resp):
+                response = resp
+                expectation.fulfill()
+            }
         }
         XCTAssertNotNil(task)
         
@@ -202,10 +232,15 @@ class VisualInstructionsTests: XCTestCase {
             XCTAssertEqual(task.state, .completed)
         }
         
-        XCTAssertNotNil(route)
-        XCTAssertEqual(route!.routeIdentifier, "cjikck25m00v279ms1knttdgc")
+        guard let route = response.routes?.first else {
+            XCTFail("No routes in response")
+            return
+        }
         
-        let step = route!.legs.first!.steps.first!
+        XCTAssertNotNil(route)
+        XCTAssertEqual(route.routeIdentifier, "cjikck25m00v279ms1knttdgc")
+        
+        let step = route.legs.first!.steps.first!
         let visualInstructions = step.instructionsDisplayedAlongStep
         
         let tertiaryInstruction = visualInstructions?.first?.tertiaryInstruction
@@ -255,13 +290,15 @@ class VisualInstructionsTests: XCTestCase {
         options.includesAlternativeRoutes = false
         options.includesVisualInstructions = true
         
-        var route: Route?
-        let task = Directions(accessToken: BogusToken).calculate(options) { (waypoints, routes, error) in
-            XCTAssertNil(error, "Error: \(error!.localizedDescription)")
+        var response: RouteResponse!
+        let task = Directions(credentials: BogusCredentials).calculate(options) { (session, result) in
             
-            XCTAssertNotNil(routes)
-            XCTAssertEqual(routes!.count, 1)
-            route = routes!.first!
+            guard case let .success(resp) = result else {
+                XCTFail("Encountered unexpected error. \(result)")
+                return
+            }
+            
+            response = resp
             
             expectation.fulfill()
         }
@@ -272,10 +309,15 @@ class VisualInstructionsTests: XCTestCase {
             XCTAssertEqual(task.state, .completed)
         }
         
-        XCTAssertNotNil(route)
-        XCTAssertEqual(route!.routeIdentifier, "cjilrvx2200447omltwdayvm4")
+        guard let route = response.routes?.first else {
+            XCTFail("No routes in response")
+            return
+          }
         
-        let step = route!.legs.first!.steps.first!
+        XCTAssertNotNil(route)
+        XCTAssertEqual(route.routeIdentifier, "cjilrvx2200447omltwdayvm4")
+        
+        let step = route.legs.first!.steps.first!
         let visualInstructions = step.instructionsDisplayedAlongStep
         
         let tertiaryInstruction = visualInstructions?.first?.tertiaryInstruction

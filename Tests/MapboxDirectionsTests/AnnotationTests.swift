@@ -23,7 +23,7 @@ class AnnotationTests: XCTestCase {
         ]
         
         stub(condition: isHost("api.mapbox.com")
-            && containsQueryParams(queryParams)) { _ in
+            && containsQueryParams(queryParams)) { _ in 
                 let path = Bundle(for: type(of: self)).path(forResource: "annotation", ofType: "json")
                 return OHHTTPStubsResponse(fileAtPath: path!, statusCode: 200, headers: ["Content-Type": "application/json"])
         }
@@ -38,14 +38,19 @@ class AnnotationTests: XCTestCase {
         options.routeShapeResolution = .full
         options.attributeOptions = [.distance, .expectedTravelTime, .speed, .congestionLevel, .maximumSpeedLimit]
         var route: Route?
-        let task = Directions(accessToken: BogusToken).calculate(options) { (waypoints, routes, error) in
-            XCTAssertNil(error, "Error: \(error!.localizedDescription)")
+        let task = Directions(credentials: BogusCredentials).calculate(options) { (session, disposition) in
             
-            XCTAssertNotNil(routes)
-            XCTAssertEqual(routes!.count, 1)
-            route = routes!.first!
-            
-            expectation.fulfill()
+            switch disposition {
+            case let .failure(error):
+                XCTFail("Error! \(error)")
+            case let .success(response):
+                XCTAssertNotNil(response.routes)
+                XCTAssertEqual(response.routes!.count, 1)
+                route = response.routes!.first!
+                
+                expectation.fulfill()
+            }
+
         }
         XCTAssertNotNil(task)
         

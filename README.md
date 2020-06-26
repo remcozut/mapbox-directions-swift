@@ -2,7 +2,6 @@
 
 [![CircleCI](https://circleci.com/gh/mapbox/mapbox-directions-swift.svg?style=svg)](https://circleci.com/gh/mapbox/mapbox-directions-swift)
 [![Carthage compatible](https://img.shields.io/badge/Carthage-compatible-4BC51D.svg?style=flat)](https://github.com/Carthage/Carthage)
-[![CocoaPods](https://img.shields.io/cocoapods/v/MapboxDirections.swift.svg)](https://cocoapods.org/pods/MapboxDirections.swift/)
 [![CocoaPods](https://img.shields.io/cocoapods/v/MapboxDirections.svg)](https://cocoapods.org/pods/MapboxDirections/)
 [![SPM compatible](https://img.shields.io/badge/SPM-compatible-4BC51D.svg?style=flat)](https://swift.org/package-manager/)
 [![codecov](https://codecov.io/gh/mapbox/mapbox-directions-swift/branch/master/graph/badge.svg)](https://codecov.io/gh/mapbox/mapbox-directions-swift)
@@ -16,28 +15,19 @@ Mapbox Directions pairs well with [MapboxGeocoder.swift](https://github.com/mapb
 Specify the following dependency in your [Carthage](https://github.com/Carthage/Carthage) Cartfile:
 
 ```cartfile
-// Latest stable release
-github "mapbox/mapbox-directions-swift" ~> 0.30
-// Latest prerelease
-github "mapbox/mapbox-directions-swift" ~> 1.0.0-alpha.1
+github "mapbox/mapbox-directions-swift" ~> 0.33
 ```
 
 Or in your [CocoaPods](http://cocoapods.org/) Podfile:
 
 ```podspec
-# Latest stable release
-pod 'MapboxDirections.swift', '~> 0.30'
-# Latest prerelease
-pod 'MapboxDirections', '~> v1.0.0-alpha.1'
+pod 'MapboxDirections', '~> 0.33'
 ```
 
 Or in your [Swift Package Manager](https://swift.org/package-manager/) Package.swift:
 
 ```swift
-# Latest stable release
-.package(url: "https://github.com/mapbox/mapbox-directions-swift.git", from: "0.30.0")
-# Latest prerelease
-.package(url: "https://github.com/mapbox/mapbox-directions-swift.git", from: "1.0.0-alpha.1")
+.package(url: "https://github.com/mapbox/mapbox-directions-swift.git", from: "0.33.0")
 ```
 
 Then `import MapboxDirections`.
@@ -62,7 +52,7 @@ The main directions class is `Directions`. Create a directions object using your
 // main.swift
 import MapboxDirections
 
-let directions = Directions(accessToken: "<#your access token#>")
+let directions = Directions(credentials: DirectionsCredentials(accessToken: "<#your access token#>"))
 ```
 
 Alternatively, you can place your access token in the `MGLMapboxAccessToken` key of your application’s Info.plist file, then use the shared directions object:
@@ -84,13 +74,15 @@ let waypoints = [
 let options = RouteOptions(waypoints: waypoints, profileIdentifier: .automobileAvoidingTraffic)
 options.includesSteps = true
 
-let task = directions.calculate(options) { (waypoints, routes, error) in
-    guard error == nil else {
-        print("Error calculating directions: \(error!)")
-        return
-    }
-
-    if let route = routes?.first, let leg = route.legs.first {
+let task = directions.calculate(options) { (session, result) in
+    switch result {
+    case .failure(let error):
+        print("Error calculating directions: \(error)")
+    case .success(let response):
+        guard let route = response.routes?.first, let leg = route.legs.first else {
+            return
+        }
+        
         print("Route via \(leg):")
 
         let distanceFormatter = LengthFormatter()
@@ -133,13 +125,15 @@ let coordinates = [
 let options = MatchOptions(coordinates: coordinates)
 options.includesSteps = true
 
-let task = directions.calculate(options) { (matches, error) in
-    guard error == nil else {
-        print("Error matching coordinates: \(error!)")
-        return
-    }
-
-    if let match = matches?.first, let leg = match.legs.first {
+let task = directions.calculate(options) { (session, result) in
+    switch result {
+    case .failure(let error):
+        print("Error matching coordinates: \(error)")
+    case .success(let response):
+        guard let match = response.matches?.first, let leg = match.legs.first else {
+            return
+        }
+        
         print("Match via \(leg):")
 
         let distanceFormatter = LengthFormatter()

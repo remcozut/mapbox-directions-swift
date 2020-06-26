@@ -1,7 +1,7 @@
 import Foundation
 import CoreLocation
 import Polyline
-import struct Turf.LineString
+import Turf
 
 /**
  A `RouteLeg` object defines a single leg of a route between two waypoints. If the overall route has only two waypoints, it has a single `RouteLeg` object that covers the entire route. The route leg object includes information about the leg, such as its name, distance, and expected travel time. Depending on the criteria used to calculate the route, the route leg object may also include detailed turn-by-turn instructions.
@@ -280,5 +280,20 @@ extension RouteLeg: CustomQuickLookConvertible {
             return nil
         }
         return debugQuickLookURL(illustrating: LineString(coordinates))
+    }
+}
+
+
+public extension Array where Element == RouteLeg {
+    /**
+     Populates source and destination information for each leg with waypoint information, typically gathered from DirectionsOptions.
+     */
+    func populate(waypoints: [Waypoint]) {
+        let legInfo = zip(zip(waypoints.prefix(upTo: waypoints.endIndex - 1), waypoints.suffix(from: 1)), self)
+
+        for (endpoints, leg) in legInfo {
+            leg.source = endpoints.0
+            leg.destination = endpoints.1
+        }
     }
 }

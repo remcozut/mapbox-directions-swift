@@ -1,6 +1,17 @@
 # Changes to Mapbox Directions for Swift
 
-## v1.0.0
+## v0.33.0
+
+* Fixed an issue where decoding and reencoding a JSON-formatted response from the Mapbox Directions API would cause the `voiceLocale` property to be omitted from route objects. ([#424](https://github.com/mapbox/mapbox-directions-swift/pull/424))
+* Added the `Route(legs:shape:distance:expectedTravelTime:)` and `Route(from:)` initializers. ([#430](https://github.com/mapbox/mapbox-directions-swift/pull/430))
+* Fixed an issue where `VisualInstruction.Component.guidanceView` lacked an image URL. ([#432](https://github.com/mapbox/mapbox-directions-swift/pull/432))
+
+## v0.32.0
+
+* Removed the `CoordinateBounds` struct in favor of `BoundingBox` from Turf. ([#427](https://github.com/mapbox/mapbox-directions-swift/pull/427))
+* Added the `VisualInstructionBanner.quaternaryInstruction` property and `VisualInstruction.Component.guidanceView(image:alternativeText:)` enumeration case to represent a detailed image of an upcoming junction. ([#425](https://github.com/mapbox/mapbox-directions-swift/pull/425))
+
+## v0.31.0
 
 ### Packaging
 
@@ -34,6 +45,7 @@
 * Various properties of `Route`, `RouteLeg`, and `RouteStep` are now writable. ([#393](https://github.com/mapbox/mapbox-directions-swift/pull/393))
 * Added `AttributeOptions.maximumSpeedLimit` for getting maximum posted speed limits in the `RouteLeg.segmentMaximumSpeedLimits` property. ([#367](https://github.com/mapbox/mapbox-directions-swift/pull/367))
 * Added the `RouteLeg.segmentRangesByStep` property for more easily associating `RouteStep`s with the values in segment-based arrays such as `RouteLeg.segmentCongestionLevels`. ([#367](https://github.com/mapbox/mapbox-directions-swift/pull/367))
+* The `RouteOptions.alleyPriority` property now works with `DirectionsProfileIdentifier.automobile`, allowing you to request routes that prefer or avoid alleys while driving. ([#416](https://github.com/mapbox/mapbox-directions-swift/pull/416))
 
 ## v0.30.0
 

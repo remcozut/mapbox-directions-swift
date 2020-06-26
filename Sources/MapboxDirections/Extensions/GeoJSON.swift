@@ -1,7 +1,13 @@
 import Foundation
 import CoreLocation
 import Polyline
-import struct Turf.LineString
+import Turf
+
+extension BoundingBox: CustomStringConvertible {
+    public var description: String {
+        return "\(southWest.longitude),\(southWest.latitude);\(northEast.longitude),\(northEast.latitude)"
+    }
+}
 
 extension LineString {
     init(polyLineString: PolyLineString) throws {

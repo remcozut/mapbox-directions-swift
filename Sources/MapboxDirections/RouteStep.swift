@@ -1,7 +1,7 @@
 import Foundation
 import CoreLocation
 import Polyline
-import struct Turf.LineString
+import Turf
 
 /**
  A `TransportType` specifies the mode of transportation used for part of a route.
@@ -61,6 +61,28 @@ public enum TransportType: String, Codable {
      The user should consult the train’s timetable. For cycling directions, the user should also verify that bicycles are permitted onboard the train.
      */
     case train // cycling
+
+    // Custom implementation of decoding is needed to circumvent issue reported in
+    // https://github.com/mapbox/mapbox-directions-swift/issues/413
+    public init(from decoder: Decoder) throws {
+        let valueContainer = try decoder.singleValueContainer()
+        let rawValue = try valueContainer.decode(String.self)
+
+        if rawValue == "pushing bike" {
+            self = .walking
+
+            return
+        }
+
+        guard let value = TransportType(rawValue: rawValue) else {
+            throw DecodingError.dataCorruptedError(
+                in: valueContainer,
+                debugDescription: "Cannot initialize TransportType from invalid String value \(rawValue)"
+            )
+        }
+        
+        self = value
+    }
 }
 
 /**
@@ -459,11 +481,11 @@ open class RouteStep: Codable {
         self.codes = codes
         self.destinationCodes = destinationCodes
         self.destinations = destinations
-        self.intersections = nil
+        self.intersections = intersections
         self.speedLimitSignStandard = speedLimitSignStandard
         self.speedLimitUnit = speedLimitUnit
-        self.instructionsSpokenAlongStep = nil
-        self.instructionsDisplayedAlongStep = nil
+        self.instructionsSpokenAlongStep = instructionsSpokenAlongStep
+        self.instructionsDisplayedAlongStep = instructionsDisplayedAlongStep
     }
     
     public func encode(to encoder: Encoder) throws {
@@ -503,7 +525,7 @@ open class RouteStep: Codable {
         try maneuver.encode(instructions, forKey: .instruction)
         try maneuver.encode(maneuverType, forKey: .type)
         try maneuver.encodeIfPresent(maneuverDirection, forKey: .direction)
-        try maneuver.encodeIfPresent(maneuverLocation, forKey: .location)
+        try maneuver.encode(CLLocationCoordinate2DCodable(maneuverLocation), forKey: .location)
         try maneuver.encodeIfPresent(initialHeading, forKey: .initialHeading)
         try maneuver.encodeIfPresent(finalHeading, forKey: .finalHeading)
         
@@ -518,7 +540,7 @@ open class RouteStep: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let maneuver = try container.nestedContainer(keyedBy: ManeuverCodingKeys.self, forKey: .maneuver)
         
-        maneuverLocation = try maneuver.decode(CLLocationCoordinate2D.self, forKey: .location)
+        maneuverLocation = try maneuver.decode(CLLocationCoordinate2DCodable.self, forKey: .location).decodedCoordinates
         maneuverType = (try? maneuver.decode(ManeuverType.self, forKey: .type)) ?? .default
         maneuverDirection = try maneuver.decodeIfPresent(ManeuverDirection.self, forKey: .direction)
         
